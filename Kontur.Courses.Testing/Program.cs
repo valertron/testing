@@ -3,13 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using System.Threading.Tasks;
 using Kontur.Courses.Testing.Implementations;
 using NUnit.Framework;
-using NUnit.Framework.Interfaces;
-using NUnit.Framework.Internal;
-using NUnit.Framework.Internal.Commands;
-using NUnit.Framework.Internal.Execution;
 
 namespace Kontur.Courses.Testing
 {
@@ -108,13 +103,8 @@ namespace Kontur.Courses.Testing
 		private static int GetTimeout(MethodInfo method)
 		{
 			return method.GetCustomAttributes<TimeoutAttribute>()
-				.Cast<IApplyToContext>()
-				.Select(a =>
-				{
-					var ctx = new TestExecutionContext();
-					a.ApplyToContext(ctx);
-					return ctx.TestCaseTimeout;
-				}).FirstOrDefault();
+				.Select(attr => (int)attr.Properties["Timeout"])
+				.FirstOrDefault();
 		}
 
 		private static IEnumerable<MethodInfo> GetTestMethods()
@@ -149,9 +139,26 @@ namespace Kontur.Courses.Testing
 						throw ex;
 				return;
 			}
-			ThreadUtility.Kill(thread);
+			Kill(thread);
 			thread.Join();
 			throw new TimeoutException();
+		}
+
+		public static void Kill(Thread thread)
+		{
+			try
+			{
+				thread.Abort();
+			}
+			catch (ThreadStateException)
+			{
+#pragma warning disable 618
+				thread.Resume();
+#pragma warning restore 618
+			}
+
+			if ((thread.ThreadState & ThreadState.WaitSleepJoin) != 0)
+				thread.Interrupt();
 		}
 	}
 }
