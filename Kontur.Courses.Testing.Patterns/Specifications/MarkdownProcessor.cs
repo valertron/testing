@@ -8,6 +8,9 @@ namespace Kontur.Courses.Testing.Patterns.Specifications
 	{
 		public string Render(string input)
 		{
+			if (input==null)
+				throw new ArgumentException();
+
 			var emReplacer = new Regex(@"([^\w\\]|^)_(.*?[^\\])_(\W|$)");
 			var strongReplacer = new Regex(@"([^\w\\]|^)__(.*?[^\\])__(\W|$)");
 			input = strongReplacer.Replace(input,
@@ -35,25 +38,40 @@ namespace Kontur.Courses.Testing.Patterns.Specifications
 			Assert.AreEqual(s, md.Render(s));
 		}
 
+		[Test]
+		public void pass_with_empty()
+		{
+			Assert.AreEqual("", md.Render(""));
+		}
+
+		[Test]
+		public void pass_with_null()
+		{
+			Assert.Throws<ArgumentException>(() => md.Render(null));
+		}
+
 		[TestCase("_a a_", Result = "<em>a a</em>", TestName = "Em_without_enviroment")]
 		[TestCase("cc _a a_", Result = "cc <em>a a</em>", TestName = "Em_with_Left_enviroment")]
 		[TestCase("_a a_ cc", Result = "<em>a a</em> cc", TestName = "Em_with_Right_enviroment")]
 		[TestCase("cc _a a_ cc", Result = "cc <em>a a</em> cc", TestName = "Em_with_enviroment")]
 		[TestCase("__bb", Result = "__bb", TestName = "Not_Matched_Strong")]
 		[TestCase("_bb", Result = "_bb", TestName = "Not_Matched_Em")]
-		[TestCase(@"\_bb\_", Result = "_bb_", TestName = "screening")]
 		public string surroundWithEm_textInsideUnderScores(string value)
 		{
 			return md.Render(value);
 		}
 
+		[TestCase(@"\_bb\_", Result = "_bb_", TestName = "screening")]
+		public string support(string value)
+		{
+			return md.Render(value);
+		}
 
 		[TestCase("cc_a_cc__bb__bb", Result = "cc_a_cc__bb__bb", TestName = "Dont_Em&Strong")]
 		public string notMark_Inside_Internal(string value)
 		{
 			return md.Render(value);
 		}
-
 
 		[TestCase("__a a__", Result = "<strong>a a</strong>", TestName = "Strong_without_enviroment")]
 		[TestCase("cc __a a__", Result = "cc <strong>a a</strong>", TestName = "Strong_with_Left_enviroment")]
