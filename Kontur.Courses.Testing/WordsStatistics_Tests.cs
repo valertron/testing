@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 using Kontur.Courses.Testing.Implementations;
 using NUnit.Framework;
 
@@ -115,5 +117,13 @@ namespace Kontur.Courses.Testing
 			CollectionAssert.AreEqual(new[] { Tuple.Create(2, "ccccc"), Tuple.Create(1, "bbbbb") }, stat.GetStatistics());
 		}
 
+		[Test, Timeout(200)]
+		public void highload_test()
+		{
+			for (int i = 0; i < 10000; i++)
+			{
+				stat.AddWord(i.ToString());
+			}
+		}
 	}
 }
